@@ -332,7 +332,7 @@ export default function Snake() {
           </button>
         </div>
       ) : (
-        <div></div>
+        <div className="text-xl p-4">Hey there! This is just snake</div>
       )}
       <div className="flex items-center justify-center">
         <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
