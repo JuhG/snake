@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 function roundRect(ctx, x, y, w, h, radius) {
   var r = x + w
@@ -18,7 +18,7 @@ function roundRect(ctx, x, y, w, h, radius) {
   ctx.fill()
 }
 
-const useAnimationFrame = (callback, deps = []) => {
+const useAnimationFrame = (callback) => {
   // Use useRef for mutable variables that we want to persist
   // without triggering a re-render on their change
   const requestRef = useRef()
@@ -36,7 +36,7 @@ const useAnimationFrame = (callback, deps = []) => {
   useEffect(() => {
     requestRef.current = requestAnimationFrame(animate)
     return () => cancelAnimationFrame(requestRef.current)
-  }, deps) // Make sure the effect runs only once
+  }, []) // Make sure the effect runs only once
 }
 
 const getDirMatrix = (dir) => {
@@ -71,101 +71,90 @@ const getNextDir = (current, next) => {
   }
 }
 
-const speed = 0.1
+const speed = 200
 const canvas = 500
 const piece = canvas / 20
 
-export default function Home() {
+export default function Snake() {
   const [dir, setDir] = useState('RIGHT')
-  const [sum, setSum] = useState(canvas / 2)
+  const [tick, setTick] = useState(0)
   const [snake, setSnake] = useState([
-    {
-      x: 0,
-      y: canvas / 2,
-      dir: 'RIGHT',
-    },
+    { x: 2, y: 0, dir: 'RIGHT' },
+    { x: 1, y: 0, dir: 'RIGHT' },
+    { x: 0, y: 0, dir: 'RIGHT' },
   ])
+  const [anim, setAnim] = useState([])
 
   useEffect(() => {
-    var canvas = document.getElementById('canvas')
-    if (!canvas.getContext) {
+    var el = document.getElementById('canvas')
+    if (!el.getContext) {
       return
     }
 
-    var ctx = canvas.getContext('2d')
-    ctx.canvas.width = window.innerWidth
-    ctx.canvas.height = window.innerHeight
+    var ctx = el.getContext('2d')
+    ctx.canvas.width = canvas
+    ctx.canvas.height = canvas
 
     ctx.clearRect(0, 0, canvas, canvas)
-    ctx.fillStyle = '#2B6CB0'
 
-    if (snake[0].x > 100 && snake.length === 1) {
-      snake.push({
-        x: snake[0].x - piece,
-        y: snake[0].y,
-        dir: snake[0].dir,
-      })
-      snake.push({
-        x: snake[0].x - piece * 2,
-        y: snake[0].y,
-        dir: snake[0].dir,
-      })
-    }
+    anim.forEach((s, i) => {
+      if (0 === i) {
+        ctx.fillStyle = '#276749'
+      } else {
+        ctx.fillStyle = '#2F855A'
+      }
 
-    snake.forEach((s) => {
-      // ctx.fillRect(s.x, s.y, piece, piece, 20)
-      roundRect(ctx, s.x, s.y, piece, piece, 5)
+      roundRect(ctx, s.x, s.y, piece, piece, piece / 3)
     })
-  }, [snake])
+  }, [anim])
 
-  useAnimationFrame(
-    (deltaTime) => {
-      setSnake((prev) => {
-        let change = false
-        setSum(sum + deltaTime)
-        if (sum > (piece / speed) * 0.9) {
-          change = true
-          setSum(0)
-        }
+  useEffect(() => {
+    if (tick > speed) {
+      setTick(0)
 
-        return prev.map((s, i) => {
-          let nextDir = s.dir
-          if (change) {
-            if (i === 0) {
-              nextDir = getNextDir(s.dir, dir)
-            } else {
-              nextDir = prev[i - 1].dir
-            }
-          }
+      setSnake((prev) =>
+        prev.map((s, i) => {
+          const nextDir = getNextDir(s.dir, dir)
           const dirMatrix = getDirMatrix(nextDir)
 
-          const x = s.x + dirMatrix.x * deltaTime * speed
-          const y = s.y + dirMatrix.y * deltaTime * speed
-
-          return {
-            x: change && nextDir !== s.dir ? Math.round(x / piece) * piece : x,
-            y: change && nextDir !== s.dir ? Math.round(y / piece) * piece : y,
-            dir: nextDir,
-          }
+          return 0 !== i
+            ? prev[i - 1]
+            : {
+                dir: nextDir,
+                x: s.x + 1 * dirMatrix.x,
+                y: s.y + 1 * dirMatrix.y,
+              }
         })
+      )
+    }
+  }, [tick])
+
+  useAnimationFrame((t) => {
+    setTick((prev) => prev + t)
+  })
+
+  useEffect(() => {
+    setAnim(
+      snake.map((s) => {
+        const dirMatrix = getDirMatrix(s.dir)
+
+        return {
+          x: (s.x - dirMatrix.x) * piece + (dirMatrix.x * tick * piece) / speed,
+          y: (s.y - dirMatrix.y) * piece + (dirMatrix.y * tick * piece) / speed,
+        }
       })
-    },
-    [sum]
-  )
+    )
+  }, [tick])
 
   const handleKeyDown = (e) => {
     switch (e.key) {
       case 'ArrowUp':
-        if ('DOWN' === dir) return
         return setDir('UP')
       case 'ArrowDown':
-        if ('UP' === dir) return
         return setDir('DOWN')
       case 'ArrowRight':
-        if ('LEFT' === dir) return
         return setDir('RIGHT')
       case 'ArrowLeft':
-        if ('RIGHT' === dir) return
         return setDir('LEFT')
     }
   }
