@@ -93,6 +93,29 @@ const collidesWithItself = (a1) => {
   })
 }
 
+const getScores = () => {
+  try {
+    const list = JSON.parse(localStorage.getItem('juhg_snake_scores'))
+    if (!list) return []
+    return list
+  } catch (e) {
+    return []
+  }
+}
+
+const addScore = (score) => {
+  localStorage.setItem(
+    'juhg_snake_scores',
+    JSON.stringify([
+      {
+        ts: new Date().getTime(),
+        score,
+      },
+      ...getScores(),
+    ])
+  )
+}
+
 const canvas = 500
 const size = 20
 const piece = canvas / size
@@ -110,6 +133,7 @@ export default function Snake() {
   ])
   const [anim, setAnim] = useState([])
   const [apple, setApple] = useState(null)
+  const [scores, setScores] = useState(null)
 
   useEffect(() => {
     var el = document.getElementById('canvas')
@@ -204,6 +228,14 @@ export default function Snake() {
 
   useEffect(() => {
     placeApple()
+
+    const sc = getScores()
+    if (sc.length) {
+      setScores({
+        last: sc[0].score,
+        max: Math.max(...sc.map((s) => s.score)),
+      })
+    }
   }, [])
 
   useEffect(() => {
@@ -228,10 +260,28 @@ export default function Snake() {
 
     if (head.x < 0 || head.y < 0 || head.x + 1 > size || head.y + 1 > size) {
       setSpeed(Infinity)
+      addScore(snake.length)
+
+      const sc = getScores()
+      if (sc.length) {
+        setScores({
+          last: sc[0].score,
+          max: Math.max(...sc.map((s) => s.score)),
+        })
+      }
     }
 
     if (collidesWithItself(snake)) {
       setSpeed(Infinity)
+      addScore(snake.length)
+
+      const sc = getScores()
+      if (sc.length) {
+        setScores({
+          last: sc[0].score,
+          max: Math.max(...sc.map((s) => s.score)),
+        })
+      }
     }
   }, [snake])
 
@@ -269,8 +319,27 @@ export default function Snake() {
   }, [handleKeyDown])
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center">
-      <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
+    <div className="h-screen w-screen flex flex-col items-center justify-between">
+      {scores ? (
+        <div className="self-stretch flex justify-around text-xl p-4">
+          <p>Last score: {scores.last}</p>
+          <p>Max score: {scores.max}</p>
+          <button
+            onClick={() => location.reload()}
+            className="py-1 px-2 rounded border-2 hover:border-black"
+          >
+            restart
+          </button>
+        </div>
+      ) : (
+        <div></div>
+      )}
+      <div className="flex items-center justify-center">
+        <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
+      </div>
+      <div className="flex items-around text-xl p-4">
+        Created by Gábor // juhg.hu // @juhgabor
+      </div>
     </div>
   )
 }
