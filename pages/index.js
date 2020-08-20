@@ -1,65 +1,80 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import { useEffect, useRef, useState } from 'react'
+
+const useAnimationFrame = (callback) => {
+  // Use useRef for mutable variables that we want to persist
+  // without triggering a re-render on their change
+  const requestRef = useRef()
+  const previousTimeRef = useRef()
+
+  const animate = (time) => {
+    if (previousTimeRef.current != undefined) {
+      const deltaTime = time - previousTimeRef.current
+      callback(deltaTime)
+    }
+    previousTimeRef.current = time
+    requestRef.current = requestAnimationFrame(animate)
+  }
+
+  useEffect(() => {
+    requestRef.current = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(requestRef.current)
+  }, []) // Make sure the effect runs only once
+}
+
+const speed = 0.02
+const size = 500
 
 export default function Home() {
+  const [count, setCount] = useState(0)
+  const [snake, setSnake] = useState([
+    {
+      x: 0,
+      y: size / 2 - size / 20 / 2,
+    },
+  ])
+
+  useEffect(() => {
+    var canvas = document.getElementById('canvas')
+    if (!canvas.getContext) {
+      return
+    }
+
+    var ctx = canvas.getContext('2d')
+    ctx.canvas.width = window.innerWidth
+    ctx.canvas.height = window.innerHeight
+
+    ctx.clearRect(0, 0, size, size)
+    ctx.strokeRect(0, 0, size, size)
+
+    if (snake[0].x > 50 && snake.length === 1) {
+      snake.push({
+        x: snake[0].x - size / 20 + 1,
+        y: snake[0].y,
+      })
+    }
+
+    snake.forEach((s) => {
+      ctx.fillRect(s.x, s.y, size / 20, size / 20, 20)
+    })
+  }, [snake])
+
+  useAnimationFrame((deltaTime) => {
+    setSnake((prev) =>
+      prev.map((s) => ({
+        ...s,
+        x: s.x + deltaTime * speed,
+      }))
+    )
+
+    // Pass on a function to the setter of the state
+    // to make sure we always have the latest state
+    setCount((prev) => prev + deltaTime * speed)
+  })
+
   return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
-
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
-
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
-
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
-
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
-
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
+    <div>
+      <div>{Math.round(count)}</div>
+      <canvas id="canvas"></canvas>
     </div>
   )
 }
