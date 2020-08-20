@@ -98,8 +98,10 @@ const size = 20
 const piece = canvas / size
 
 export default function Snake() {
+  const [ts, setTs] = useState(0)
+
   const [speed, setSpeed] = useState(200)
-  const [dir, setDir] = useState('RIGHT')
+  const [dir, setDir] = useState(['RIGHT'])
   const [tick, setTick] = useState(0)
   const [snake, setSnake] = useState([
     { x: 2, y: 0, dir: 'RIGHT' },
@@ -145,15 +147,25 @@ export default function Snake() {
 
     setSnake((prev) =>
       prev.map((s, i) => {
-        const nextDir = getNextDir(s.dir, dir)
+        const nextDir = getNextDir(s.dir, dir[0])
+        if (dir.length > 1) {
+          setDir((prev) => {
+            if (!prev || prev.length < 2) {
+              return prev
+            }
+
+            return prev.splice(1)
+          })
+        }
+
         const dirMatrix = getDirMatrix(nextDir)
 
         return 0 !== i
           ? prev[i - 1]
           : {
               dir: nextDir,
-              x: s.x + 1 * dirMatrix.x,
-              y: s.y + 1 * dirMatrix.y,
+              x: s.x + dirMatrix.x,
+              y: s.y + dirMatrix.y,
             }
       })
     )
@@ -224,15 +236,28 @@ export default function Snake() {
   }, [snake])
 
   const handleKeyDown = (e) => {
+    if (
+      ['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft'].indexOf(e.key) < 0
+    ) {
+      return
+    }
+
+    let append = false
+    const current = new Date().getTime()
+    if (current - ts < 250) {
+      append = true
+    }
+    setTs(current)
+
     switch (e.key) {
       case 'ArrowUp':
-        return setDir('UP')
+        return append ? setDir((prev) => [...prev, 'UP']) : setDir(['UP'])
       case 'ArrowDown':
-        return setDir('DOWN')
+        return append ? setDir((prev) => [...prev, 'DOWN']) : setDir(['DOWN'])
       case 'ArrowRight':
-        return setDir('RIGHT')
+        return append ? setDir((prev) => [...prev, 'RIGHT']) : setDir(['RIGHT'])
       case 'ArrowLeft':
-        return setDir('LEFT')
+        return append ? setDir((prev) => [...prev, 'LEFT']) : setDir(['LEFT'])
     }
   }
 
