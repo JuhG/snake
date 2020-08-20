@@ -71,11 +71,34 @@ const getNextDir = (current, next) => {
   }
 }
 
-const speed = 200
+const isSame = (p1, p2) => {
+  return p1.x === p2.x && p1.y === p2.y
+}
+
+const collides = (a1, a2) => {
+  return a1.some((a1e) => {
+    return a2.some((a2e) => {
+      return isSame(a1e, a2e)
+    })
+  })
+}
+
+const collidesWithItself = (a1) => {
+  return a1.some((a1e, i) => {
+    return a1.some((a2e, j) => {
+      if (i === j) return false
+
+      return isSame(a1e, a2e)
+    })
+  })
+}
+
 const canvas = 500
-const piece = canvas / 20
+const size = 20
+const piece = canvas / size
 
 export default function Snake() {
+  const [speed, setSpeed] = useState(200)
   const [dir, setDir] = useState('RIGHT')
   const [tick, setTick] = useState(0)
   const [snake, setSnake] = useState([
@@ -84,6 +107,7 @@ export default function Snake() {
     { x: 0, y: 0, dir: 'RIGHT' },
   ])
   const [anim, setAnim] = useState([])
+  const [apple, setApple] = useState(null)
 
   useEffect(() => {
     var el = document.getElementById('canvas')
@@ -104,29 +128,35 @@ export default function Snake() {
         ctx.fillStyle = '#2F855A'
       }
 
-      roundRect(ctx, s.x, s.y, piece, piece, piece / 3)
+      roundRect(ctx, s.x * piece, s.y * piece, piece, piece, piece / 3)
     })
+
+    if (apple) {
+      ctx.fillStyle = '#E53E3E'
+      roundRect(ctx, apple.x * piece, apple.y * piece, piece, piece, piece / 3)
+    }
   }, [anim])
 
   useEffect(() => {
-    if (tick > speed) {
-      setTick(0)
-
-      setSnake((prev) =>
-        prev.map((s, i) => {
-          const nextDir = getNextDir(s.dir, dir)
-          const dirMatrix = getDirMatrix(nextDir)
-
-          return 0 !== i
-            ? prev[i - 1]
-            : {
-                dir: nextDir,
-                x: s.x + 1 * dirMatrix.x,
-                y: s.y + 1 * dirMatrix.y,
-              }
-        })
-      )
+    if (tick < speed) {
+      return
     }
+    setTick(0)
+
+    setSnake((prev) =>
+      prev.map((s, i) => {
+        const nextDir = getNextDir(s.dir, dir)
+        const dirMatrix = getDirMatrix(nextDir)
+
+        return 0 !== i
+          ? prev[i - 1]
+          : {
+              dir: nextDir,
+              x: s.x + 1 * dirMatrix.x,
+              y: s.y + 1 * dirMatrix.y,
+            }
+      })
+    )
   }, [tick])
 
   useAnimationFrame((t) => {
@@ -139,12 +169,59 @@ export default function Snake() {
         const dirMatrix = getDirMatrix(s.dir)
 
         return {
-          x: (s.x - dirMatrix.x) * piece + (dirMatrix.x * tick * piece) / speed,
-          y: (s.y - dirMatrix.y) * piece + (dirMatrix.y * tick * piece) / speed,
+          x: s.x - dirMatrix.x + (dirMatrix.x * tick) / speed,
+          y: s.y - dirMatrix.y + (dirMatrix.y * tick) / speed,
         }
       })
     )
   }, [tick])
+
+  const placeApple = () => {
+    const newPos = {
+      x: Math.round(Math.random() * (size - 1)),
+      y: Math.round(Math.random() * (size - 1)),
+    }
+
+    if (collides([newPos], snake)) {
+      placeApple()
+      return
+    }
+
+    setApple(newPos)
+  }
+
+  useEffect(() => {
+    placeApple()
+  }, [])
+
+  useEffect(() => {
+    if (!apple) return
+    if (isSame(snake[0], apple)) {
+      placeApple()
+      setSnake((prev) => {
+        const last = { ...prev[prev.length - 1] }
+        const dirMatrix = getDirMatrix(last.dir)
+
+        return [
+          ...prev,
+          { ...last, x: last.x - dirMatrix.x, y: last.y - dirMatrix.y },
+        ]
+      })
+      setSpeed((prev) => prev * 0.98)
+    }
+  }, [snake])
+
+  useEffect(() => {
+    const head = snake[0]
+
+    if (head.x < 0 || head.y < 0 || head.x + 1 > size || head.y + 1 > size) {
+      setSpeed(Infinity)
+    }
+
+    if (collidesWithItself(snake)) {
+      setSpeed(Infinity)
+    }
+  }, [snake])
 
   const handleKeyDown = (e) => {
     switch (e.key) {
@@ -167,8 +244,8 @@ export default function Snake() {
   }, [handleKeyDown])
 
   return (
-    <div>
-      <canvas id="canvas" className="bg-blue-300"></canvas>
+    <div className="h-screen w-screen flex items-center justify-center">
+      <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
     </div>
   )
 }
