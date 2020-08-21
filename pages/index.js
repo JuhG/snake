@@ -54,23 +54,6 @@ const getDirMatrix = (dir) => {
   }
 }
 
-const getNextDir = (current, next) => {
-  switch (current) {
-    case 'UP':
-      if ('DOWN' === next) return 'UP'
-      return next
-    case 'DOWN':
-      if ('UP' === next) return 'DOWN'
-      return next
-    case 'LEFT':
-      if ('RIGHT' === next) return 'LEFT'
-      return next
-    case 'RIGHT':
-      if ('LEFT' === next) return 'RIGHT'
-      return next
-  }
-}
-
 const isSame = (p1, p2) => {
   return p1.x === p2.x && p1.y === p2.y
 }
@@ -116,14 +99,28 @@ const addScore = (score) => {
   )
 }
 
-const canvas = 500
-const size = 20
+const getDirectionByKey = (key) => {
+  switch (key) {
+    case 'ArrowUp':
+      return 'UP'
+    case 'ArrowDown':
+      return 'DOWN'
+    case 'ArrowRight':
+      return 'RIGHT'
+    case 'ArrowLeft':
+      return 'LEFT'
+    default:
+      throw new Error('Invalid key')
+  }
+}
+
+const canvas = 360
+const size = 24
 const piece = canvas / size
+const baseSpeed = 150
 
 export default function Snake() {
-  const [ts, setTs] = useState(0)
-
-  const [speed, setSpeed] = useState(200)
+  const [speed, setSpeed] = useState(baseSpeed)
   const [dir, setDir] = useState(['RIGHT'])
   const [tick, setTick] = useState(0)
   const [snake, setSnake] = useState([
@@ -163,6 +160,48 @@ export default function Snake() {
     }
   }, [anim])
 
+  const getNextDir = (current, next) => {
+    const nextDir = next[0]
+
+    switch (current) {
+      case 'UP':
+        if (['DOWN', 'UP'].indexOf(nextDir) > -1 && next.length > 1) {
+          const fallback = next.splice(1)
+          setDir(fallback)
+          return getNextDir(current, fallback)
+        }
+        if ('DOWN' === nextDir) return 'UP'
+        return nextDir
+
+      case 'DOWN':
+        if (['UP', 'DOWN'].indexOf(nextDir) > -1 && next.length > 1) {
+          const fallback = next.splice(1)
+          setDir(fallback)
+          return getNextDir(current, fallback)
+        }
+        if ('UP' === nextDir) return 'DOWN'
+        return nextDir
+
+      case 'LEFT':
+        if (['RIGHT', 'LEFT'].indexOf(nextDir) > -1 && next.length > 1) {
+          const fallback = next.splice(1)
+          setDir(fallback)
+          return getNextDir(current, fallback)
+        }
+        if ('RIGHT' === nextDir) return 'LEFT'
+        return nextDir
+
+      case 'RIGHT':
+        if (['LEFT', 'RIGHT'].indexOf(nextDir) > -1 && next.length > 1) {
+          const fallback = next.splice(1)
+          setDir(fallback)
+          return getNextDir(current, fallback)
+        }
+        if ('LEFT' === nextDir) return 'RIGHT'
+        return nextDir
+    }
+  }
+
   useEffect(() => {
     if (tick < speed) {
       return
@@ -171,7 +210,7 @@ export default function Snake() {
 
     setSnake((prev) =>
       prev.map((s, i) => {
-        const nextDir = getNextDir(s.dir, dir[0])
+        const nextDir = getNextDir(s.dir, dir)
         if (dir.length > 1) {
           setDir((prev) => {
             if (!prev || prev.length < 2) {
@@ -251,7 +290,7 @@ export default function Snake() {
           { ...last, x: last.x - dirMatrix.x, y: last.y - dirMatrix.y },
         ]
       })
-      setSpeed((prev) => prev * 0.98)
+      setSpeed((prev) => prev * 0.96)
     }
   }, [snake])
 
@@ -292,23 +331,11 @@ export default function Snake() {
       return
     }
 
-    let append = false
-    const current = new Date().getTime()
-    if (current - ts < 250) {
-      append = true
-    }
-    setTs(current)
-
-    switch (e.key) {
-      case 'ArrowUp':
-        return append ? setDir((prev) => [...prev, 'UP']) : setDir(['UP'])
-      case 'ArrowDown':
-        return append ? setDir((prev) => [...prev, 'DOWN']) : setDir(['DOWN'])
-      case 'ArrowRight':
-        return append ? setDir((prev) => [...prev, 'RIGHT']) : setDir(['RIGHT'])
-      case 'ArrowLeft':
-        return append ? setDir((prev) => [...prev, 'LEFT']) : setDir(['LEFT'])
-    }
+    const nextDir = getDirectionByKey(e.key)
+    setDir((prev) => {
+      if (prev.length && prev[prev.length - 1] === nextDir) return prev
+      return [...prev, nextDir]
+    })
   }
 
   useEffect(() => {
