@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import Xwiper from 'xwiper'
 
 function roundRect(ctx, x, y, w, h, radius) {
   var r = x + w
@@ -275,6 +276,36 @@ export default function Snake() {
         max: Math.max(...sc.map((s) => s.score)),
       })
     }
+
+    const xwiper = new Xwiper('#game')
+    xwiper.onSwipeLeft(() => {
+      const nextDir = 'LEFT'
+      setDir((prev) => {
+        if (prev.length && prev[prev.length - 1] === nextDir) return prev
+        return [...prev, nextDir]
+      })
+    })
+    xwiper.onSwipeRight(() => {
+      const nextDir = 'RIGHT'
+      setDir((prev) => {
+        if (prev.length && prev[prev.length - 1] === nextDir) return prev
+        return [...prev, nextDir]
+      })
+    })
+    xwiper.onSwipeUp(() => {
+      const nextDir = 'UP'
+      setDir((prev) => {
+        if (prev.length && prev[prev.length - 1] === nextDir) return prev
+        return [...prev, nextDir]
+      })
+    })
+    xwiper.onSwipeDown(() => {
+      const nextDir = 'DOWN'
+      setDir((prev) => {
+        if (prev.length && prev[prev.length - 1] === nextDir) return prev
+        return [...prev, nextDir]
+      })
+    })
   }, [])
 
   useEffect(() => {
@@ -346,7 +377,10 @@ export default function Snake() {
   }, [handleKeyDown])
 
   return (
-    <div className="h-screen w-screen flex flex-col items-center justify-between">
+    <div
+      id="game"
+      className="h-screen w-screen flex flex-col items-center justify-between"
+    >
       {scores ? (
         <div className="self-stretch flex justify-around text-xl p-4">
           <p>Last score: {scores.last}</p>
