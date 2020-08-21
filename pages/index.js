@@ -379,7 +379,7 @@ export default function Snake() {
   return (
     <div
       id="game"
-      className="h-screen w-screen flex flex-col items-center justify-between"
+      className="overflow-hidden h-game w-screen flex flex-col items-center justify-between"
     >
       {scores ? (
         <div className="self-stretch flex justify-around items-center text-lg p-3 w-full text-center bg-gray-100">
