@@ -382,24 +382,29 @@ export default function Snake() {
       className="h-screen w-screen flex flex-col items-center justify-between"
     >
       {scores ? (
-        <div className="self-stretch flex justify-around text-xl p-4">
+        <div className="self-stretch flex justify-around items-center text-lg p-3 w-full text-center bg-gray-100">
           <p>Last score: {scores.last}</p>
           <p>Max score: {scores.max}</p>
           <button
             onClick={() => location.reload()}
-            className="py-1 px-2 rounded border-2 hover:border-black"
+            className="py-1 px-2 rounded border-2 border-gray-500 hover:border-black"
           >
             restart
           </button>
         </div>
       ) : (
-        <div className="text-xl p-4">Hey there! This is just snake</div>
+        <div className="text-lg p-3 w-full text-center bg-gray-100">
+          Hey there! This is just snake
+        </div>
       )}
-      <div className="flex items-center justify-center">
+      <div className="flex-1 flex items-center justify-center">
         <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
       </div>
-      <div className="flex items-around text-xl p-4">
-        Created by Gábor // juhg.hu // @juhgabor
+      <div className="text-lg p-3 w-full text-center bg-gray-100">
+        📱 On mobile just swipe in a direction!
+      </div>
+      <div className="text-lg p-3 w-full text-center bg-gray-100">
+        Created by Gábor // <a href="https://juhg.hu">juhg.hu</a> // @juhgabor
       </div>
     </div>
   )
