@@ -115,6 +115,27 @@ const getDirectionByKey = (key) => {
   }
 }
 
+const drawApple = (ctx, apple) => {
+  if (!apple) {
+    return
+  }
+
+  ctx.fillStyle = '#E53E3E'
+  roundRect(ctx, apple.x * piece, apple.y * piece, piece, piece, piece / 3)
+}
+
+const drawSnake = (ctx, snake) => {
+  snake.forEach((s, i) => {
+    if (0 === i) {
+      ctx.fillStyle = '#276749'
+    } else {
+      ctx.fillStyle = '#2F855A'
+    }
+
+    roundRect(ctx, s.x * piece, s.y * piece, piece, piece, piece / 3)
+  })
+}
+
 const canvas = 360
 const size = 24
 const piece = canvas / size
@@ -133,33 +154,24 @@ export default function Snake() {
   const [apple, setApple] = useState(null)
   const [scores, setScores] = useState(null)
 
+  const el = useRef(null)
+  const [ctx, setCtx] = useState(null)
+
   useEffect(() => {
-    var el = document.getElementById('canvas')
-    if (!el.getContext) {
-      return
-    }
+    console.log('here')
+    if (!el) return
+    const newCtx = el.current.getContext('2d')
+    setCtx(newCtx)
+    newCtx.canvas.width = canvas
+    newCtx.canvas.height = canvas
+  }, [el])
 
-    var ctx = el.getContext('2d')
-    ctx.canvas.width = canvas
-    ctx.canvas.height = canvas
-
+  useEffect(() => {
+    if (!ctx) return
     ctx.clearRect(0, 0, canvas, canvas)
-
-    anim.forEach((s, i) => {
-      if (0 === i) {
-        ctx.fillStyle = '#276749'
-      } else {
-        ctx.fillStyle = '#2F855A'
-      }
-
-      roundRect(ctx, s.x * piece, s.y * piece, piece, piece, piece / 3)
-    })
-
-    if (apple) {
-      ctx.fillStyle = '#E53E3E'
-      roundRect(ctx, apple.x * piece, apple.y * piece, piece, piece, piece / 3)
-    }
-  }, [anim])
+    drawSnake(ctx, anim)
+    drawApple(ctx, apple)
+  }, [ctx, anim, apple])
 
   const getNextDir = (current, next) => {
     const nextDir = next[0]
@@ -398,7 +410,11 @@ export default function Snake() {
         </div>
       )}
       <div className="flex-1 flex items-center justify-center">
-        <canvas id="canvas" className="bg-blue-300 rounded-lg"></canvas>
+        <canvas
+          ref={el}
+          id="canvas"
+          className="bg-blue-300 rounded-lg"
+        ></canvas>
       </div>
       <div className="text-lg p-3 w-full text-center bg-gray-100">
         📱 On mobile just swipe in a direction!
