@@ -22,6 +22,8 @@ const wss = new WebSocket.Server({ port: 9898 })
 let games = []
 
 wss.on('connection', function connection(ws) {
+  console.log('WS server started')
+
   ws.on('message', function incoming(message) {
     const data = JSON.parse(message)
 
