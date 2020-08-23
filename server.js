@@ -5,7 +5,7 @@ let games = []
 const { createServer } = require('http')
 const next = require('next')
 
-const port = 3000
+const port = 3003
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
@@ -16,13 +16,17 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl)
   }).listen(port, (err) => {
     if (err) throw err
+    console.log('here')
     console.log(`> Ready on http://localhost:${port}`)
 
-    wss = new WebSocket.Server({ port: 9898 })
+    try {
+      wss = new WebSocket.Server({ port: 9898 })
+      console.log('WS server started')
+    } catch (e) {
+      console.log(e)
+    }
 
     wss.on('connection', function connection(ws) {
-      console.log('WS server started')
-
       ws.on('message', function incoming(message) {
         const data = JSON.parse(message)
 
