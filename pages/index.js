@@ -370,7 +370,7 @@ export default function Snake() {
 
   useEffect(() => {
     if ('undefined' === typeof WebSocket) return
-    const newWs = new WebSocket(`ws://${window.location.hostname}:9898/`)
+    const newWs = new WebSocket(`wss://${window.location.hostname}:9898/`)
     setWs(newWs)
 
     newWs.onopen = () => {
