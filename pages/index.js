@@ -140,6 +140,7 @@ const canvas = 360
 const size = 24
 const piece = canvas / size
 const baseSpeed = 150
+const ts = new Date().getTime()
 
 export default function Snake() {
   const [speed, setSpeed] = useState(baseSpeed)
@@ -156,9 +157,9 @@ export default function Snake() {
 
   const el = useRef(null)
   const [ctx, setCtx] = useState(null)
+  const [ws, setWs] = useState(null)
 
   useEffect(() => {
-    console.log('here')
     if (!el) return
     const newCtx = el.current.getContext('2d')
     setCtx(newCtx)
@@ -367,6 +368,48 @@ export default function Snake() {
     }
   }, [snake])
 
+  useEffect(() => {
+    if ('undefined' === typeof WebSocket) return
+    const newWs = new WebSocket('ws://localhost:9898/')
+    setWs(newWs)
+
+    newWs.onopen = () => {
+      newWs.send(
+        JSON.stringify({
+          type: 'start',
+          name: ts,
+        })
+      )
+    }
+
+    newWs.onmessage = (e) => {
+      const data = JSON.parse(e.data)
+
+      switch (data.type) {
+        case 'start':
+          console.log(data)
+          return
+
+        case 'move':
+          console.log(data.dir)
+          if (!data.dir) return
+          setDir((prev) => {
+            console.log(prev, data.dir)
+            if (prev.length && prev[prev.length - 1] === data.dir) return prev
+            return [...prev, data.dir]
+          })
+          return
+
+        case 'join':
+          console.log(data)
+          return
+
+        default:
+          throw new Error('Invalid data type.')
+      }
+    }
+  }, [])
+
   const handleKeyDown = (e) => {
     if (
       ['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft'].indexOf(e.key) < 0
@@ -375,10 +418,24 @@ export default function Snake() {
     }
 
     const nextDir = getDirectionByKey(e.key)
-    setDir((prev) => {
-      if (prev.length && prev[prev.length - 1] === nextDir) return prev
-      return [...prev, nextDir]
-    })
+    onDirChange(nextDir)
+  }
+
+  const onDirChange = (nextDir) => {
+    if (ws) {
+      ws.send(
+        JSON.stringify({
+          type: 'move',
+          dir: nextDir,
+          ts: new Date().getTime(),
+        })
+      )
+    }
+
+    // setDir((prev) => {
+    //   if (prev.length && prev[prev.length - 1] === nextDir) return prev
+    //   return [...prev, nextDir]
+    // })
   }
 
   useEffect(() => {

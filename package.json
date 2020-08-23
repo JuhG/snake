@@ -11,6 +11,7 @@
     "next": "9.5.2",
     "react": "16.13.1",
     "react-dom": "16.13.1",
+    "ws": "^7.3.1",
     "xwiper": "^2.2.0"
   },
   "devDependencies": {
