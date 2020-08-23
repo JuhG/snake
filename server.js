@@ -5,7 +5,7 @@ let games = []
 const { createServer } = require('http')
 const next = require('next')
 
-const port = 3003
+const port = 3000
 const dev = process.env.NODE_ENV !== 'production'
 const app = next({ dev })
 const handle = app.getRequestHandler()
